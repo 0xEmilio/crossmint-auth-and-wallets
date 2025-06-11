@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   CrossmintAuthProvider,
   CrossmintCheckoutProvider,
@@ -12,14 +12,14 @@ import {
 } from "@crossmint/client-sdk-react-ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
-import { useAccount, useWalletClient, WagmiProvider, useDisconnect } from "wagmi";
+import {
+  useAccount,
+  useWalletClient,
+  WagmiProvider,
+  useDisconnect,
+} from "wagmi";
 import { type Hex, parseTransaction } from "viem";
-
-type ExtendedUser = {
-  id: string;
-  email?: string;
-  [key: string]: any;
-};
+import { baseSepolia } from "viem/chains";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +27,9 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <CrossmintProvider apiKey={process.env.NEXT_PUBLIC_CROSSMINT_API_KEY || ""}>
+        <CrossmintProvider
+          apiKey={process.env.NEXT_PUBLIC_CROSSMINT_API_KEY || ""}
+        >
           <CrossmintCheckoutProvider>
             <CrossmintAuthProvider loginMethods={["email", "google", "web3"]}>
               <CrossmintWalletProvider>{children}</CrossmintWalletProvider>
@@ -40,8 +42,7 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 function CheckoutPage() {
-  const { user: rawUser, login, logout } = useAuth();
-  const user = rawUser as ExtendedUser;
+  const { user, login, logout } = useAuth();
   const { wallet: smartWallet, getOrCreateWallet } = useWallet();
   const { address: externalWallet } = useAccount();
   const { disconnect } = useDisconnect();
@@ -79,21 +80,28 @@ function CheckoutPage() {
 
     if (!externalWallet && !smartWallet?.address) {
       console.log("⚙️ Needs to create Crossmint wallet...");
-      void getOrCreateWallet({
+      getOrCreateWallet({
         chain: "base-sepolia",
         signer: { type: "passkey" },
       });
-    } else if (externalWallet) {
-      console.log("⛔ Web3 wallet detected, skipping Crossmint wallet creation.");
-    } else if (smartWallet?.address) {
+      return;
+    }
+    if (externalWallet) {
+      console.log(
+        "⛔ Web3 wallet detected, skipping Crossmint wallet creation."
+      );
+      return;
+    }
+    if (smartWallet?.address) {
       console.log("✅ Already has a Crossmint smart wallet.");
+      return;
     }
   }, [user?.id, externalWallet, smartWallet?.address, getOrCreateWallet]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      await logout();
-      await disconnect();
+      logout();
+      disconnect();
       setShowCheckout(false);
       console.log("👋 Logged out and disconnected.");
     } catch (err) {
@@ -185,6 +193,13 @@ function CheckoutPage() {
                     supportedChains: ["base-sepolia"],
                     handleChainSwitch: async (chain) => {
                       console.log("🔀 Chain switch requested:", chain);
+                      if (!walletClient) {
+                        console.error("❌ Wallet client not available");
+                        return;
+                      }
+                      await walletClient.switchChain({
+                        id: baseSepolia.id,
+                      });
                     },
                     handleSignAndSendTransaction: async (serializedTx) => {
                       if (!walletClient) {
