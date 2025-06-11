@@ -20,6 +20,7 @@ import {
 } from "wagmi";
 import { type Hex, parseTransaction } from "viem";
 import { baseSepolia } from "viem/chains";
+import { EVMWallet } from "@crossmint/client-sdk-react-ui";
 
 const queryClient = new QueryClient();
 
@@ -202,16 +203,32 @@ function CheckoutPage() {
                       });
                     },
                     handleSignAndSendTransaction: async (serializedTx) => {
-                      if (!walletClient) {
-                        console.error("❌ Wallet client not available");
-                        return {
-                          success: false,
-                          errorMessage: "Wallet client not found.",
-                        };
-                      }
-
                       try {
                         const tx = parseTransaction(serializedTx as Hex);
+                        // check for smart wallet first
+                        // if smart wallet, send transaction with smart wallet
+                        if (smartWallet) {
+                          const evmSmartWallet = EVMWallet.from(
+                            smartWallet as EVMWallet
+                          );
+                          const hash = await evmSmartWallet.sendTransaction({
+                            to: tx.to ?? "",
+                            value: tx.value,
+                            data: tx.data ?? "0x",
+                            chain: "base-sepolia",
+                          });
+
+                          console.log("✅ Transaction sent:", hash);
+                          return { success: true, txId: hash ?? "" };
+                        }
+                        // if external wallet, send transaction with external wallet
+                        if (!walletClient) {
+                          console.error("❌ Wallet client not available");
+                          return {
+                            success: false,
+                            errorMessage: "Wallet client not found.",
+                          };
+                        }
                         const hash = await walletClient.sendTransaction({
                           to: tx.to,
                           value: tx.value,
