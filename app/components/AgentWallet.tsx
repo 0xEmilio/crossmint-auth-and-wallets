@@ -7,6 +7,12 @@ import { formatBalance } from '@/lib/utils';
 import { useConfigStatus } from './ConfigurationStatus';
 import ViewTransactions from './ViewTransactions';
 
+interface AdminSigner {
+  type: string;
+  address: string;
+  locator: string;
+}
+
 interface DelegatedSigner {
   type: string;
   locator: string;
@@ -36,6 +42,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [signers, setSigners] = useState<any[]>([]);
+  const [adminSigners, setAdminSigners] = useState<Record<string, AdminSigner>>({});
   const [delegatedSigners, setDelegatedSigners] = useState<Record<string, DelegatedSigner[]>>({});
   const [walletBalances, setWalletBalances] = useState<Record<string, WalletBalance>>({});
   const [error, setError] = useState<string | null>(null);
@@ -52,9 +59,10 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
 
     setIsLoading(true);
     setError(null);
-    setSigners([]);
-    setDelegatedSigners({});
-    setWalletBalances({});
+          setSigners([]);
+      setAdminSigners({});
+      setDelegatedSigners({});
+      setWalletBalances({});
 
     try {
       console.log('Checking agent wallets for wallet:', wallet.address);
@@ -80,8 +88,9 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
       const agentWallets = data.signers || [];
       setSigners(agentWallets);
 
-      // Get delegated signers and balances for each agent wallet
+      // Get admin signers, delegated signers and balances for each agent wallet
       for (const agentWallet of agentWallets) {
+        await getAdminSigner(agentWallet.address);
         await getDelegatedSigners(agentWallet.address);
         await getWalletBalance(agentWallet.address);
       }
@@ -90,6 +99,25 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
       setError(err instanceof Error ? err.message : 'Failed to check agent wallets');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getAdminSigner = async (walletAddress: string) => {
+    try {
+      // This would call the Crossmint API to get admin signer
+      // For now, we'll use a placeholder based on the structure you provided
+      const adminSigner: AdminSigner = {
+        type: "evm-fireblocks-custodial",
+        address: "0xcC3A5221b20f363A77fBD23880Ec94B112483F10",
+        locator: "evm-fireblocks-custodial:0xcC3A5221b20f363A77fBD23880Ec94B112483F10"
+      };
+      
+      setAdminSigners(prev => ({
+        ...prev,
+        [walletAddress]: adminSigner
+      }));
+    } catch (error) {
+      console.error('Error getting admin signer:', error);
     }
   };
 
@@ -254,6 +282,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
       const [localIsLoading, setLocalIsLoading] = useState(false);
       const [localIsCreating, setLocalIsCreating] = useState(false);
       const [localSigners, setLocalSigners] = useState<any[]>([]);
+      const [localAdminSigners, setLocalAdminSigners] = useState<Record<string, AdminSigner>>({});
       const [localError, setLocalError] = useState<string | null>(null);
       const [localResult, setLocalResult] = useState<any>(null);
       const [hasChecked, setHasChecked] = useState(false);
@@ -558,6 +587,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
         setLocalIsLoading(true);
         setLocalError(null);
         setLocalSigners([]);
+        setLocalAdminSigners({});
         setLocalDelegatedSigners({});
         setLocalWalletBalances({});
 
@@ -585,8 +615,16 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
           setLocalSigners(agentWallets);
           setHasChecked(true);
 
-          // Extract delegated signers from agent wallet config and get balances
+          // Extract admin signers, delegated signers from agent wallet config and get balances
           for (const agentWallet of agentWallets) {
+            // Extract admin signer from the agent wallet config
+            if (agentWallet.config?.adminSigner) {
+              setLocalAdminSigners(prev => ({
+                ...prev,
+                [agentWallet.address]: agentWallet.config.adminSigner
+              }));
+            }
+            
             // Extract delegated signers from the agent wallet config
             const delegatedSigners = agentWallet.config?.delegatedSigners || [];
             setLocalDelegatedSigners(prev => ({
@@ -852,6 +890,29 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
                           )}
                         </div>
                       </div>
+
+                      {/* Admin Signer */}
+                      {localAdminSigners[walletAddress] && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <h5 className="font-medium text-blue-900 mb-2">Admin Signer</h5>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium">Type:</span>
+                              <span className="ml-2">{localAdminSigners[walletAddress].type}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">Address:</span>
+                              <span className="ml-2 font-mono text-blue-600 break-all">{localAdminSigners[walletAddress].address}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">Locator:</span>
+                              <span className="ml-2 font-mono text-blue-600 break-all">{localAdminSigners[walletAddress].locator}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+
 
                       {/* USDC Balance */}
                       {balance ? (
