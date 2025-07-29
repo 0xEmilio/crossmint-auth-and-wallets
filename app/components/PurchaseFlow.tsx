@@ -57,54 +57,16 @@ export function PurchaseFlow({ onShowContent, isActive }: PurchaseFlowProps) {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white text-center">Purchase NFT</h2>
-            <p className="text-purple-100 text-center mt-1">Secure checkout powered by Crossmint</p>
+          <div className="bg-gradient-to-r  px-6 py-4">
+            <h2 className="text-2xl font-bold text-black text-center">Purchase NFT (Embedded Checkout)</h2>
           </div>
 
           {/* Main Content */}
           <div className="p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Product Info */}
-              <div className="lg:col-span-1">
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Product Details</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Collection:</span>
-                      <span className="font-medium">Crossmint Demo NFT</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Quantity:</span>
-                      <span className="font-medium">1</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Price:</span>
-                      <span className="font-medium text-green-600">$1.00</span>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Total:</span>
-                        <span className="text-green-600">$1.00</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Wallet Info */}
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-blue-800 mb-3">Receiving Wallet</h3>
-                  <div className="bg-white rounded border p-3">
-                    <p className="text-sm text-gray-600 mb-1">Address:</p>
-                    <p className="text-xs font-mono text-blue-600 break-all">
-                      {activeWallet}
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-6">
 
               {/* Checkout Form */}
-              <div className="lg:col-span-2">
+              <div>
                 <div className="bg-white border rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Payment Method</h3>
                   <div className="min-h-[400px]">
@@ -218,7 +180,7 @@ export function PurchaseFlow({ onShowContent, isActive }: PurchaseFlowProps) {
       }
       title={!isCollectionConfigured ? 'Collection ID not configured' : ''}
     >
-      Purchase NFT
+      NFT Checkout
     </button>
   );
 } 

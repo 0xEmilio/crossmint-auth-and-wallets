@@ -90,7 +90,7 @@ export function ConfigurationStatus({ className = "" }: ConfigurationStatusProps
           <div className="flex items-start space-x-2">
             <span className="text-red-500">•</span>
             <div>
-              <span className="font-medium text-red-700">Onramp & Worldstore</span> are disabled
+              <span className="font-medium text-red-700">Onramp, Worldstore & Agent Wallets</span> are disabled
               <p className="text-gray-600 mt-1">
                 Add <code className="bg-gray-100 px-1 rounded">CROSSMINT_SERVER_API_KEY</code> to your <code className="bg-gray-100 px-1 rounded">.env.local</code> file
               </p>

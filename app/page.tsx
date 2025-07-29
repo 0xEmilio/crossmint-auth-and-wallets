@@ -12,7 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
 import { useAccount, WagmiProvider, useDisconnect } from "wagmi";
 import { DEFAULT_CHAIN, DEFAULT_SIGNER_TYPE, buttonStyles } from "@/lib/constants";
-import { PurchaseFlow, WorldstoreFlow, OnrampFlow, SendFlow, WalletInfo, BalanceFetcher, ConfigurationStatus } from "./components";
+import { PurchaseFlow, WorldstoreFlow, OnrampFlow, SendFlow, WalletInfo, BalanceFetcher, ConfigurationStatus, AgentWallet } from "./components";
 
 const queryClient = new QueryClient();
 
@@ -109,12 +109,12 @@ function CheckoutPage() {
               onClick={handleBackToOptions}
               className={buttonStyles.secondary}
             >
-              ← Back to Options
+              ← Back to Menu
             </button>
             {activeContent}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <BalanceFetcher 
               onShowContent={(content) => {
                 setActiveContent(content);
@@ -149,6 +149,13 @@ function CheckoutPage() {
                 setActiveFlow('worldstore');
               }}
               isActive={activeFlow === 'worldstore'}
+            />
+            <AgentWallet 
+              onShowContent={(content) => {
+                setActiveContent(content);
+                setActiveFlow('agent-wallet');
+              }}
+              isActive={activeFlow === 'agent-wallet'}
             />
           </div>
         )}

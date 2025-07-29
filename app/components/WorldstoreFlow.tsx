@@ -323,7 +323,7 @@ export function WorldstoreFlow({ onShowContent, isActive }: WorldstoreFlowProps)
       disabled={!isServerApiKeyConfigured}
       title={!isServerApiKeyConfigured ? 'Server API key not configured' : undefined}
     >
-      Purchase with Worldstore
+      Worldstore
     </button>
   );
 }
