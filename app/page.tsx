@@ -12,7 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
 import { useAccount, WagmiProvider, useDisconnect } from "wagmi";
 import { DEFAULT_CHAIN, DEFAULT_SIGNER_TYPE, buttonStyles } from "@/lib/constants";
-import { PurchaseFlow, WorldstoreFlow, OnrampFlow, SendFlow, WalletInfo, BalanceFetcher } from "./components";
+import { PurchaseFlow, WorldstoreFlow, OnrampFlow, SendFlow, WalletInfo, BalanceFetcher, ConfigurationStatus } from "./components";
 
 const queryClient = new QueryClient();
 
@@ -56,9 +56,6 @@ function CheckoutPage() {
     setHasMounted(true);
   }, []);
 
-  const isWeb3User = !!externalWallet;
-  const activeWallet = isWeb3User ? externalWallet : wallet?.address || "";
-
   const handleLogout = () => {
     try {
       logout();
@@ -71,21 +68,6 @@ function CheckoutPage() {
   const handleBackToOptions = () => {
     setActiveContent(null);
     setActiveFlow(null);
-  };
-
-  const createOnrampContent = (context: string) => (
-    <div className="border rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-4 text-center">Buy USDC</h2>
-      <div className="text-center space-y-4">
-        <p className="text-green-600">Onramp integration coming soon...</p>
-        <p className="text-sm text-gray-500">Add USDC to your wallet to continue {context}</p>
-      </div>
-    </div>
-  );
-
-  const handleTriggerOnramp = (context: string = "") => {
-    setActiveContent(createOnrampContent(context));
-    setActiveFlow('onramp');
   };
 
   if (!hasMounted) return null;
@@ -152,7 +134,6 @@ function CheckoutPage() {
                 setActiveContent(content);
                 setActiveFlow('send');
               }}
-              onTriggerOnramp={() => handleTriggerOnramp("sending")}
               isActive={activeFlow === 'send'}
             />
             <PurchaseFlow 
@@ -167,11 +148,12 @@ function CheckoutPage() {
                 setActiveContent(content);
                 setActiveFlow('worldstore');
               }}
-              onTriggerOnramp={() => handleTriggerOnramp("shopping")}
               isActive={activeFlow === 'worldstore'}
             />
           </div>
         )}
+
+        <ConfigurationStatus />
       </div>
     </div>
   );

@@ -55,6 +55,9 @@ NEXT_PUBLIC_CROSSMINT_ENV=staging
 
 # Optional - NFT Collection (for purchase testing)
 NEXT_PUBLIC_CROSSMINT_COLLECTION_ID=your-collection-id
+
+# Optional - KYC Template (for onramp KYC)
+NEXT_PUBLIC_PERSONA_TEMPLATE=your-persona-template-id
 ```
 
 3. **Start development server:**
@@ -77,6 +80,7 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 | `NEXT_PUBLIC_SIGNER_TYPE` | ❌ | Default wallet signer method | `passkey` |
 | `NEXT_PUBLIC_CROSSMINT_ENV` | ❌ | Crossmint environment | `staging` |
 | `NEXT_PUBLIC_CROSSMINT_COLLECTION_ID` | ❌ | NFT collection for purchases | - |
+| `NEXT_PUBLIC_PERSONA_TEMPLATE` | ❌ | Persona KYC template for onramp | - |
 
 ### Supported Chains
 - Base Sepolia (default)
@@ -146,11 +150,26 @@ lib/
 - Automatic chain switching for Web3 users
 - Collection configuration via environment variables
 
-### 5. Amazon Worldstore
+### 5. Buy USDC (Onramp)
+- Fiat-to-crypto conversion with KYC verification
+- Multi-step flow: amount → KYC → payment → completion
+- Persona integration for identity verification
+- KYC template configuration via environment variables
+
+### 6. Amazon Worldstore
 - Complete shopping flow: email → address → product → review → purchase
 - Product quotes with pricing and tax calculation
 - Balance validation with onramp integration
 - Order tracking and status monitoring
+
+## Configuration Status
+
+The application includes a configuration status component that automatically detects missing environment variables and displays helpful warnings to users. This component:
+
+- Shows which features are disabled due to missing configuration
+- Provides specific instructions for adding required environment variables
+- Only appears when there are configuration issues
+- Helps developers quickly identify setup problems
 
 ## Development
 

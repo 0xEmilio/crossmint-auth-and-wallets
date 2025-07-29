@@ -25,11 +25,10 @@ interface TokenBalance {
 
 interface SendFlowProps {
   onShowContent: (content: React.ReactNode) => void;
-  onTriggerOnramp: () => void;
   isActive: boolean;
 }
 
-export function SendFlow({ onShowContent, onTriggerOnramp, isActive }: SendFlowProps) {
+export function SendFlow({ onShowContent, isActive }: SendFlowProps) {
   const { wallet, getOrCreateWallet } = useWallet();
   const { address: externalWallet } = useAccount();
   const { signMessageAsync } = useSignMessage();
@@ -166,12 +165,12 @@ export function SendFlow({ onShowContent, onTriggerOnramp, isActive }: SendFlowP
             You need USDC on {getChainDisplayName(selectedChain)} to send payments.
           </p>
           <div className="flex space-x-3 justify-center">
-            <button
-              onClick={onTriggerOnramp}
-              className={buttonStyles.primary}
-            >
-              Buy USDC
-            </button>
+                          <button
+                onClick={() => onShowContent(null)}
+                className={buttonStyles.primary}
+              >
+                Go to Buy USDC
+              </button>
             <button
               onClick={fetchBalances}
               disabled={isLoadingBalances}
@@ -246,7 +245,7 @@ export function SendFlow({ onShowContent, onTriggerOnramp, isActive }: SendFlowP
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">
-                  {['0.1', '1', '5', 'MAX'].map((preset) => (
+                  {['0.1', '1', '6.9', 'MAX'].map((preset) => (
                     <button
                       key={preset}
                       type="button"
@@ -333,7 +332,6 @@ export function SendFlow({ onShowContent, onTriggerOnramp, isActive }: SendFlowP
 
           {currentStep === 'success' && (
             <div className="text-center space-y-4">
-              <div className="text-6xl mb-4">✅</div>
               <h3 className="text-lg font-semibold text-green-600">Transaction Successful!</h3>
               <p className="text-green-600">{success}</p>
               

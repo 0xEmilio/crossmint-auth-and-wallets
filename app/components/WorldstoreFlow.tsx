@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useWallet } from '@crossmint/client-sdk-react-ui';
+import { useWallet, useAuth } from '@crossmint/client-sdk-react-ui';
 import { 
   buttonStyles, 
   cardStyles, 
@@ -12,20 +12,43 @@ import {
   RETRY_INTERVAL
 } from '@/lib/constants';
 import { formatBalance, getChainDisplayName, parseBalanceToFloat } from '@/lib/utils';
+import { useConfigStatus } from './ConfigurationStatus';
 
 interface WorldstoreFlowProps {
   onShowContent: (content: React.ReactNode) => void;
-  onTriggerOnramp: () => void;
   isActive: boolean;
 }
 
-export function WorldstoreFlow({ onShowContent, onTriggerOnramp, isActive }: WorldstoreFlowProps) {
+export function WorldstoreFlow({ onShowContent, isActive }: WorldstoreFlowProps) {
   const { wallet, getOrCreateWallet } = useWallet();
+  const { user } = useAuth();
+  const { configStatus, mounted } = useConfigStatus();
+
+  const isServerApiKeyConfigured = mounted ? (configStatus?.serverApiKey ?? false) : false;
 
   const handleClick = () => {
+    if (!isServerApiKeyConfigured) {
+      onShowContent(
+        <div className={cardStyles.base}>
+          <h2 className="text-xl font-semibold mb-4 text-center text-red-600">Server API Key Not Configured</h2>
+          <div className={cardStyles.error}>
+            <p className="text-red-700 mb-2">
+              The Worldstore feature requires a server API key. Please add the following environment variable:
+            </p>
+            <code className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm block">
+              CROSSMINT_SERVER_API_KEY=your-server-api-key
+            </code>
+            <p className="text-red-600 text-sm mt-2">
+              Add this to your <code className="bg-red-100 px-1 rounded">.env.local</code> file and restart the development server.
+            </p>
+          </div>
+        </div>
+      );
+      return;
+    }
     const WorldstoreForm = () => {
       const [step, setStep] = React.useState(1);
-      const [email, setEmail] = React.useState('');
+      const [email, setEmail] = React.useState(user?.email || '');
       const [name, setName] = React.useState('');
       const [address1, setAddress1] = React.useState('');
       const [address2, setAddress2] = React.useState('');
@@ -278,7 +301,6 @@ export function WorldstoreFlow({ onShowContent, onTriggerOnramp, isActive }: Wor
           onOrder={handleOrder}
           onReset={reset}
           onClose={() => onShowContent(null)}
-          onTriggerOnramp={onTriggerOnramp}
           canContinue={canContinue}
           isInsufficientBalance={isInsufficientBalance}
         />
@@ -291,7 +313,15 @@ export function WorldstoreFlow({ onShowContent, onTriggerOnramp, isActive }: Wor
   return (
     <button
       onClick={handleClick}
-      className={isActive ? buttonStyles.primary : buttonStyles.secondary}
+      className={
+        !isServerApiKeyConfigured
+          ? buttonStyles.disabled
+          : isActive 
+            ? buttonStyles.primary
+            : buttonStyles.secondary
+      }
+      disabled={!isServerApiKeyConfigured}
+      title={!isServerApiKeyConfigured ? 'Server API key not configured' : undefined}
     >
       Purchase with Worldstore
     </button>
@@ -330,7 +360,6 @@ function WorldstoreFlowContent({
   onOrder,
   onReset,
   onClose,
-  onTriggerOnramp,
   canContinue,
   isInsufficientBalance
 }: any) {
@@ -594,12 +623,9 @@ function WorldstoreFlowContent({
                     <p className="text-red-700 mb-3">
                       You need ${quote.order.quote?.totalPrice?.amount || '0'} USDC but only have ${balance} USDC
                     </p>
-                    <button
-                      onClick={onTriggerOnramp}
-                      className={buttonStyles.primary}
-                    >
-                      Buy More USDC
-                    </button>
+                    <p className="text-red-700">
+                      Please buy more USDC to complete this order.
+                    </p>
                   </div>
                 )}
               </div>
