@@ -1,56 +1,28 @@
-# Crossmint SDK Demo
+# Crossmint Auth & Wallets Demo
 
-A comprehensive Next.js application demonstrating Crossmint's authentication, wallet management, and e-commerce capabilities including NFT purchases, USDC transfers, balance checking, onramp integration, and Amazon Worldstore integration.
+A comprehensive Next.js application demonstrating Crossmint authentication, wallet management, and blockchain interactions with an improved dashboard organization.
 
-## Features
+## 🚀 Quick Start
 
-### 🔐 Authentication & Wallets
-- **Multi-method Authentication**: Email, Google, and Web3 wallet login
-- **Smart Wallet Management**: Automatic wallet creation with passkey or email signing
-- **Cross-chain Support**: Configurable blockchain networks (default: Base Sepolia)
-
-### 💰 Financial Operations
-- **Balance Checking**: Real-time USDC balance fetching across supported chains
-- **Token Transfers**: Send USDC with custom amounts and recipient validation
-- **Onramp Integration**: Placeholder for fiat-to-crypto conversion (ready for implementation)
-
-### 🛒 E-commerce Integration
-- **NFT Purchases**: Embedded checkout for NFT collections with crypto/fiat payments
-- **Amazon Worldstore**: Complete shopping flow with product quotes, balance validation, and order tracking
-- **Transaction Monitoring**: Real-time order status polling and confirmation
-
-### 🎨 User Experience
-- **Professional UI**: Clean, consistent design with TailwindCSS
-- **Multi-step Workflows**: Intuitive progress flows for complex operations
-- **Error Handling**: Comprehensive validation and user feedback
-- **Responsive Design**: Mobile-friendly interface
-
-## Quick Start
-
-### Prerequisites
-- Node.js 18+ and npm
-- Crossmint account with API keys
-- (Optional) NFT collection for purchase testing
-
-### Installation
-
-1. **Clone and install dependencies:**
+### 1. **Install Dependencies**
 ```bash
-git clone <repository-url>
-cd crossmint-demo
 npm install
 ```
 
-2. **Configure environment variables:**
-Create a `.env.local` file:
-```env
-# Required - Crossmint API Keys
-NEXT_PUBLIC_CROSSMINT_CLIENT_API_KEY=your-client-api-key
-CROSSMINT_SERVER_API_KEY=your-server-api-key
+### 2. **Configure Environment Variables**
+Create a `.env.local` file in the root directory:
 
-# Optional - Customization
+```bash
+# Required - Authentication & Basic Features
+NEXT_PUBLIC_CROSSMINT_CLIENT_API_KEY=your-client-side-api-key
+
+# Required - Advanced Features (Onramp, Worldstore, Agent Wallets, View Transactions)
+CROSSMINT_SERVER_API_KEY=your-server-side-api-key
+
+# Optional - Default Configuration
 NEXT_PUBLIC_DEFAULT_CHAIN=base-sepolia
 NEXT_PUBLIC_SIGNER_TYPE=passkey
+NEXT_PUBLIC_CROSSMINT_ENV=staging
 
 # Optional - NFT Collection (for purchase testing)
 NEXT_PUBLIC_CROSSMINT_COLLECTION_ID=your-collection-id
@@ -59,31 +31,48 @@ NEXT_PUBLIC_CROSSMINT_COLLECTION_ID=your-collection-id
 NEXT_PUBLIC_PERSONA_TEMPLATE=your-persona-template-id
 ```
 
-3. **Start development server:**
+### 3. **Start Development Server**
 ```bash
 npm run dev
 ```
 
-4. **Open application:**
+### 4. **Open Application**
 Navigate to [http://localhost:3000](http://localhost:3000)
 
-## Configuration
+## 🏗️ Dashboard Organization
+
+The application features a logically organized dashboard with three main sections:
+
+### **Your Wallet** Section
+- **Fetch Balances** - Check real-time USDC balances across chains
+- **View Transactions** - Browse transaction history with expandable details
+- **Your Agent** - Create and manage agent wallets for automated transactions
+
+### **Funding** Section
+- **Buy USDC** - Fiat onramp with KYC verification and payment processing
+- **Send USDC** - Transfer USDC to other addresses with balance validation
+
+### **Commerce** Section
+- **NFT Checkout** - Purchase NFTs with embedded Crossmint checkout
+- **Worldstore** - Amazon shopping integration with crypto payments
+
+## 🔧 Configuration
 
 ### Environment Variables
 
 | Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
 | `NEXT_PUBLIC_CROSSMINT_CLIENT_API_KEY` | ✅ | Client-side API key for Crossmint | - |
-| `CROSSMINT_SERVER_API_KEY` | ✅ | Server-side API key for Crossmint | - |
+| `CROSSMINT_SERVER_API_KEY` | ✅ | Server-side API key for advanced features | - |
 | `NEXT_PUBLIC_DEFAULT_CHAIN` | ❌ | Default blockchain network | `base-sepolia` |
 | `NEXT_PUBLIC_SIGNER_TYPE` | ❌ | Default wallet signer method | `passkey` |
 | `NEXT_PUBLIC_CROSSMINT_ENV` | ❌ | Crossmint environment | `staging` |
 | `NEXT_PUBLIC_CROSSMINT_COLLECTION_ID` | ❌ | NFT collection for purchases | - |
-| `NEXT_PUBLIC_PERSONA_TEMPLATE` | ❌ | Persona KYC template for onramp | - |
 
 ### Supported Chains
 - Base Sepolia (default)
-- Other EVM chains (configurable via environment)
+- Ethereum Sepolia
+- Other EVM chains (configurable)
 
 ### Supported Signer Types
 - Passkey (default)
@@ -92,20 +81,78 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 - API Key
 - External Wallet
 
-## Architecture
+## 🎯 Features
+
+### **Authentication & Wallets**
+- **Multi-Method Login**: Email, Google, Web3 wallet support
+- **Smart Wallet Creation**: Automatic wallet creation for email/social users
+- **Web3 Integration**: Connect existing wallets seamlessly
+- **Wallet Management**: View balances, transaction history, and wallet details
+
+### **Balance Management**
+- **Real-time Balances**: Check USDC balances across multiple chains
+- **Balance Validation**: Automatic insufficient funds detection
+- **Multi-chain Support**: View balances on different networks
+
+### **Transaction Management**
+- **Transaction History**: View all transactions with expandable details
+- **Status Tracking**: Real-time transaction status updates
+- **Explorer Links**: Direct links to blockchain explorers
+- **Pagination**: Navigate through large transaction lists
+- **Agent Wallet Transactions**: View transactions for agent wallets with "Back to Agent" navigation
+
+### **USDC Transfers**
+- **Send USDC**: Transfer USDC to any address
+- **Balance Validation**: Prevent insufficient funds transactions
+- **Preset Amounts**: Quick selection of common amounts (0.1, 1, 5 USDC)
+- **MAX Option**: Send entire balance with one click
+- **Transaction Tracking**: Monitor transaction status and explorer links
+
+### **Fiat Onramp (Buy USDC)**
+- **KYC Integration**: Persona identity verification
+- **Payment Processing**: Secure fiat-to-crypto conversion
+- **Multi-step Flow**: Email → KYC → Payment → Completion
+- **Order Tracking**: Monitor purchase status and confirmations
+
+### **Agent Wallets**
+- **Agent Creation**: Create automated transaction wallets
+- **Delegated Signers**: Add signers with specific permissions
+- **Expiry Management**: Set expiration dates for delegated signers
+- **Balance Monitoring**: Track agent wallet USDC balances
+- **Transaction Viewing**: View agent wallet transaction history
+
+### **NFT Purchases**
+- **Embedded Checkout**: Seamless NFT purchase experience
+- **Crypto/Fiat Options**: Pay with crypto or fiat
+- **Collection Support**: Purchase from configured NFT collections
+- **Chain Switching**: Automatic chain switching for Web3 users
+
+### **Amazon Worldstore**
+- **Complete Shopping Flow**: Email → Address → Product → Review → Purchase
+- **Product Quotes**: Real-time pricing and tax calculation
+- **Balance Integration**: Automatic balance checking and onramp integration
+- **Order Tracking**: Monitor order status and delivery
+
+## 🏗️ Architecture
 
 ### File Structure
 ```
 app/
 ├── components/           # React components
+│   ├── AgentWallet.tsx       # Agent wallet management
 │   ├── BalanceFetcher.tsx    # Balance checking
+│   ├── ConfigurationStatus.tsx # Environment validation
 │   ├── OnrampFlow.tsx        # Fiat onramp
 │   ├── PurchaseFlow.tsx      # NFT purchases
 │   ├── SendFlow.tsx          # USDC transfers
+│   ├── ViewTransactions.tsx  # Transaction history
 │   ├── WalletInfo.tsx        # Wallet display
 │   ├── WorldstoreFlow.tsx    # Amazon integration
 │   └── index.ts              # Component exports
 ├── api/                  # API routes
+│   ├── get-transactions/     # Transaction fetching
+│   ├── get-agent-wallets/    # Agent wallet management
+│   ├── add-delegated-signer/ # Delegated signer management
 │   ├── wallet-balances/      # Balance fetching
 │   ├── worldstore-order/     # Order creation
 │   └── worldstore-status/    # Order tracking
@@ -126,83 +173,86 @@ lib/
 - **Styling**: TailwindCSS with custom components
 - **State**: React hooks with optimized re-rendering
 
-## Usage Guide
+## 🎮 Usage Guide
 
-### 1. Authentication
-- Choose from email, Google, or Web3 wallet login
-- Smart wallets are created automatically for email/social users
-- Web3 users connect their existing wallets
+### 1. **Getting Started**
+1. Connect your wallet or sign in with email/Google
+2. Smart wallets are created automatically for email/social users
+3. Web3 users can connect existing wallets
 
-### 2. Check Balances
-- View real-time USDC balance on configured chain
-- Refresh functionality for updated amounts
-- Error handling for network issues
+### 2. **Managing Your Wallet**
+- **Check Balances**: Click "Fetch Balances" to view USDC balances
+- **View Transactions**: Click "View Transactions" to see transaction history
+- **Send USDC**: Use "Send USDC" to transfer funds to other addresses
 
-### 3. Send USDC
-- Multi-step flow: amount → recipient → confirmation
-- Balance validation and insufficient funds handling
-- Preset amounts (0.1, 1, 5 USDC) and MAX option
-- Transaction tracking with explorer links
+### 3. **Agent Wallets**
+- **Create Agent**: Click "Your Agent" to create automated transaction wallets
+- **Add Signers**: Delegate transaction signing to other addresses
+- **Set Expiry**: Configure expiration dates for delegated signers
+- **View Transactions**: Monitor agent wallet activity
 
-### 4. Purchase NFTs
-- Embedded Crossmint checkout with crypto/fiat options
-- Automatic chain switching for Web3 users
-- Collection configuration via environment variables
+### 4. **Funding Your Wallet**
+- **Buy USDC**: Use "Buy USDC" for fiat-to-crypto conversion
+- **KYC Process**: Complete identity verification for purchases
+- **Payment Options**: Pay with various fiat payment methods
 
-### 5. Buy USDC (Onramp)
-- Fiat-to-crypto conversion with KYC verification
-- Multi-step flow: amount → KYC → payment → completion
-- Persona integration for identity verification
-- KYC template configuration via environment variables
+### 5. **Making Purchases**
+- **NFT Checkout**: Use "NFT Checkout" to purchase NFTs
+- **Worldstore**: Use "Worldstore" for Amazon shopping with crypto
 
-### 6. Amazon Worldstore
-- Complete shopping flow: email → address → product → review → purchase
-- Product quotes with pricing and tax calculation
-- Balance validation with onramp integration
-- Order tracking and status monitoring
+## 🔒 Security Features
 
-## Configuration Status
+- **Server API Key Protection**: Advanced features require server-side API key
+- **Environment Validation**: Automatic detection of missing configuration
+- **Error Handling**: Graceful error display and recovery
+- **Transaction Validation**: Balance and permission checks
+- **KYC Integration**: Secure identity verification for onramp
 
-The application includes a configuration status component that automatically detects missing environment variables and displays helpful warnings to users. This component:
+## 🚨 Configuration Status
 
-- Shows which features are disabled due to missing configuration
-- Provides specific instructions for adding required environment variables
-- Only appears when there are configuration issues
-- Helps developers quickly identify setup problems
+The application includes automatic configuration status detection that:
+- **Validates Environment**: Checks for required environment variables
+- **Shows Warnings**: Displays helpful messages for missing configuration
+- **Guides Setup**: Provides specific instructions for enabling features
+- **Graceful Degradation**: Disables features that require missing configuration
 
-## Development
+## 🛠️ Development
 
-### Code Quality
-- **TypeScript**: Full type safety throughout
-- **Error Handling**: Comprehensive try-catch with user feedback
-- **Logging**: Strategic console output for debugging
-- **Validation**: Input validation and business logic checks
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+```
 
-### Component Patterns
-- **Shared Constants**: Centralized styling and configuration
-- **Utility Functions**: Reusable logic for common operations
-- **Prop Interfaces**: Clear component contracts
-- **State Management**: Optimized React hooks usage
+### Adding New Features
+1. Create component in `app/components/`
+2. Add API route in `app/api/` if needed
+3. Export component in `app/components/index.ts`
+4. Add to dashboard in `app/page.tsx`
 
-### API Design
-- **RESTful Endpoints**: Standard HTTP methods and status codes
-- **Error Responses**: Consistent error format across routes
-- **Environment Handling**: Staging/production environment support
-- **Security**: Server-side API key management
+## 📝 Recent Updates
 
-## Contributing
+### Dashboard Organization
+- **Logical Grouping**: Features organized into "Your Wallet", "Funding", and "Commerce" sections
+- **Improved Naming**: More descriptive component names (Your Agent, Buy USDC, Send USDC, NFT Checkout)
+- **Better UX**: Clear visual hierarchy and responsive layout
 
-1. **Code Style**: Follow existing patterns and TypeScript conventions
-2. **Testing**: Test all payment flows in staging environment
-3. **Documentation**: Update README for new features
-4. **Environment**: Ensure all environment variables are documented
+### Transaction Management
+- **View Transactions Module**: New dedicated module for browsing transaction history
+- **Expandable Details**: Click transactions to see full details
+- **Pagination**: Navigate through large transaction lists
+- **Agent Integration**: View agent wallet transactions with proper navigation
 
-## Support
+### Agent Wallet Enhancements
+- **Expiry Management**: Set expiration dates for delegated signers
+- **Date/Time Picker**: User-friendly expiry configuration
+- **Enhanced Display**: Show expiry information and expired status
+- **Transaction Viewing**: View agent wallet transactions with "Back to Agent" navigation
 
-- **Crossmint Documentation**: [docs.crossmint.com](https://docs.crossmint.com)
-- **Issues**: Use GitHub issues for bug reports and feature requests
-- **API Reference**: Check Crossmint API documentation for latest endpoints
-
-## License
-
-This project is provided as a demonstration and learning resource. Please review Crossmint's terms of service for production usage. 
+### UI/UX Improvements
+- **Loading States**: Proper loading indicators throughout
+- **Error Handling**: Graceful error display and recovery
+- **Responsive Design**: Works on all screen sizes
+- **Visual Feedback**: Status indicators and progress tracking 

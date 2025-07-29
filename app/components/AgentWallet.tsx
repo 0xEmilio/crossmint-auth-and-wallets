@@ -5,6 +5,13 @@ import { useWallet } from '@crossmint/client-sdk-react-ui';
 import { buttonStyles, cardStyles, DEFAULT_CHAIN } from '@/lib/constants';
 import { formatBalance } from '@/lib/utils';
 import { useConfigStatus } from './ConfigurationStatus';
+import ViewTransactions from './ViewTransactions';
+
+interface AdminSigner {
+  type: string;
+  address: string;
+  locator: string;
+}
 
 interface DelegatedSigner {
   type: string;
@@ -35,6 +42,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [signers, setSigners] = useState<any[]>([]);
+  const [adminSigners, setAdminSigners] = useState<Record<string, AdminSigner>>({});
   const [delegatedSigners, setDelegatedSigners] = useState<Record<string, DelegatedSigner[]>>({});
   const [walletBalances, setWalletBalances] = useState<Record<string, WalletBalance>>({});
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +59,10 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
 
     setIsLoading(true);
     setError(null);
-    setSigners([]);
-    setDelegatedSigners({});
-    setWalletBalances({});
+          setSigners([]);
+      setAdminSigners({});
+      setDelegatedSigners({});
+      setWalletBalances({});
 
     try {
       console.log('Checking agent wallets for wallet:', wallet.address);
@@ -79,8 +88,9 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
       const agentWallets = data.signers || [];
       setSigners(agentWallets);
 
-      // Get delegated signers and balances for each agent wallet
+      // Get admin signers, delegated signers and balances for each agent wallet
       for (const agentWallet of agentWallets) {
+        await getAdminSigner(agentWallet.address);
         await getDelegatedSigners(agentWallet.address);
         await getWalletBalance(agentWallet.address);
       }
@@ -89,6 +99,25 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
       setError(err instanceof Error ? err.message : 'Failed to check agent wallets');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getAdminSigner = async (walletAddress: string) => {
+    try {
+      // This would call the Crossmint API to get admin signer
+      // For now, we'll use a placeholder based on the structure you provided
+      const adminSigner: AdminSigner = {
+        type: "evm-fireblocks-custodial",
+        address: "0xcC3A5221b20f363A77fBD23880Ec94B112483F10",
+        locator: "evm-fireblocks-custodial:0xcC3A5221b20f363A77fBD23880Ec94B112483F10"
+      };
+      
+      setAdminSigners(prev => ({
+        ...prev,
+        [walletAddress]: adminSigner
+      }));
+    } catch (error) {
+      console.error('Error getting admin signer:', error);
     }
   };
 
@@ -253,6 +282,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
       const [localIsLoading, setLocalIsLoading] = useState(false);
       const [localIsCreating, setLocalIsCreating] = useState(false);
       const [localSigners, setLocalSigners] = useState<any[]>([]);
+      const [localAdminSigners, setLocalAdminSigners] = useState<Record<string, AdminSigner>>({});
       const [localError, setLocalError] = useState<string | null>(null);
       const [localResult, setLocalResult] = useState<any>(null);
       const [hasChecked, setHasChecked] = useState(false);
@@ -285,6 +315,9 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
         });
         const [allowance, setAllowance] = useState('');
         const [isSubmitting, setIsSubmitting] = useState(false);
+        const [showExpiry, setShowExpiry] = useState(false);
+        const [expiryDate, setExpiryDate] = useState('');
+        const [expiryTime, setExpiryTime] = useState('');
 
         // Reset form when modal opens
         React.useEffect(() => {
@@ -295,11 +328,19 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
             'erc20-token-transfer': false,
             'gas-limit': false
           });
+          setShowExpiry(false);
+          setExpiryDate('');
+          setExpiryTime('');
         }, []);
 
         const handleSubmit = async () => {
           if (!signerAddress.trim()) {
             alert('Please enter a signer address');
+            return;
+          }
+
+          if (showExpiry && (!expiryDate || !expiryTime)) {
+            alert('Please select both date and time for expiry');
             return;
           }
 
@@ -333,12 +374,21 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
               })
               .filter(Boolean);
 
-            console.log('Adding delegated signer with chain:', chain);
-            await onAdd(walletAddress, {
+            // Prepare signer data
+            const signerData: any = {
               signer: signerAddress,
               chain,
               permissions: permissionsArray
-            });
+            };
+
+            // Add expiry if enabled and date/time are provided
+            if (showExpiry && expiryDate && expiryTime) {
+              const expiryDateTime = new Date(`${expiryDate}T${expiryTime}`);
+              signerData.expiresAt = expiryDateTime.getTime();
+            }
+
+            console.log('Adding delegated signer with chain:', chain);
+            await onAdd(walletAddress, signerData);
             
             // Show success state only if no error was thrown
             setShowSuccess(true);
@@ -356,7 +406,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               {showSuccess ? (
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-4 text-green-600">✅ Delegated Signer Added Successfully!</h3>
+                  <h3 className="text-lg font-semibold mb-4 text-green-600">Delegated Signer Added Successfully!</h3>
                   <p className="text-sm text-gray-600 mb-6">
                     The delegated signer has been added to your agent wallet. You can now use it for automated transactions.
                   </p>
@@ -387,7 +437,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
                     value={signerAddress}
                     onChange={(e) => setSignerAddress(e.target.value)}
                     placeholder="0x..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
                 
@@ -402,8 +452,54 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
                     value={allowance}
                     onChange={(e) => setAllowance(e.target.value)}
                     placeholder="value in USD"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
+                </div>
+
+                {/* Expiry Toggle and Fields */}
+                <div>
+                  <label className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={showExpiry}
+                      onChange={(e) => setShowExpiry(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Set Expiry Date</span>
+                  </label>
+                  
+                  {showExpiry && (
+                    <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Expiry Date
+                        </label>
+                        <input
+                          type="date"
+                          value={expiryDate}
+                          onChange={(e) => setExpiryDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Expiry Time
+                        </label>
+                        <input
+                          type="time"
+                          value={expiryTime}
+                          onChange={(e) => setExpiryTime(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      {expiryDate && expiryTime && (
+                        <div className="text-xs text-gray-600">
+                          Expires: {new Date(`${expiryDate}T${expiryTime}`).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -469,7 +565,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !signerAddress.trim()}
+                  disabled={isSubmitting || !signerAddress.trim() || (showExpiry && (!expiryDate || !expiryTime))}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Adding...' : 'Add Signer'}
@@ -491,6 +587,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
         setLocalIsLoading(true);
         setLocalError(null);
         setLocalSigners([]);
+        setLocalAdminSigners({});
         setLocalDelegatedSigners({});
         setLocalWalletBalances({});
 
@@ -518,8 +615,16 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
           setLocalSigners(agentWallets);
           setHasChecked(true);
 
-          // Extract delegated signers from agent wallet config and get balances
+          // Extract admin signers, delegated signers from agent wallet config and get balances
           for (const agentWallet of agentWallets) {
+            // Extract admin signer from the agent wallet config
+            if (agentWallet.config?.adminSigner) {
+              setLocalAdminSigners(prev => ({
+                ...prev,
+                [agentWallet.address]: agentWallet.config.adminSigner
+              }));
+            }
+            
             // Extract delegated signers from the agent wallet config
             const delegatedSigners = agentWallet.config?.delegatedSigners || [];
             setLocalDelegatedSigners(prev => ({
@@ -705,17 +810,6 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
       return (
         <div className="w-full">
           <h2 className="text-xl font-semibold mb-4">Agent Wallet</h2>
-          
-          <div className="space-y-4 mb-6">
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h3 className="font-medium text-yellow-900 mb-2">What this does:</h3>
-              <ul className="text-sm text-yellow-800 space-y-1">
-                <li>• Creates and manages agent wallets for automated transactions</li>
-                <li>• Uses your current wallet as the admin signer</li>
-                <li>• Agent wallets can perform transactions on your behalf</li>
-              </ul>
-            </div>
-          </div>
 
           {localError && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -726,7 +820,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
           {localSigners.length > 0 ? (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-gray-900">Your Agent Wallets</h3>
+                <h3 className="font-medium text-gray-900"></h3>
                 <button
                   type="button"
                   onClick={handleCheckAgentWallets}
@@ -751,7 +845,32 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
                     <div key={index} className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                       {/* Agent Wallet Info */}
                       <div className="mb-4">
-                        <h4 className="font-semibold text-gray-900 mb-3">Agent Wallet</h4>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-semibold text-gray-900">Agent Wallet</h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const ViewTransactionsWithAgentCallback = () => (
+                                <ViewTransactions 
+                                  onShowContent={(content) => {
+                                    if (content === null) {
+                                      // Return to agent wallet form
+                                      onShowContent(<AgentWalletForm />);
+                                    } else {
+                                      onShowContent(content);
+                                    }
+                                  }}
+                                  isActive={false}
+                                  walletAddress={walletAddress}
+                                />
+                              );
+                              onShowContent(<ViewTransactionsWithAgentCallback />);
+                            }}
+                            className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                          >
+                            View Transactions
+                          </button>
+                        </div>
                         <div className="space-y-2 text-sm">
                           <div>
                             <span className="font-medium">Address:</span>
@@ -771,6 +890,29 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
                           )}
                         </div>
                       </div>
+
+                      {/* Admin Signer */}
+                      {localAdminSigners[walletAddress] && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <h5 className="font-medium text-blue-900 mb-2">Admin Signer</h5>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium">Type:</span>
+                              <span className="ml-2">{localAdminSigners[walletAddress].type}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">Address:</span>
+                              <span className="ml-2 font-mono text-blue-600 break-all">{localAdminSigners[walletAddress].address}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">Locator:</span>
+                              <span className="ml-2 font-mono text-blue-600 break-all">{localAdminSigners[walletAddress].locator}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+
 
                       {/* USDC Balance */}
                       {balance ? (
@@ -886,8 +1028,13 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
                                     <div>
                                       <span className="font-medium text-sm">Expires:</span>
                                       <span className="ml-2 text-sm text-gray-600">
-                                        {new Date(delegatedSigner.expiresAt).toLocaleDateString()}
+                                        {new Date(delegatedSigner.expiresAt).toLocaleString()}
                                       </span>
+                                      {delegatedSigner.expiresAt < Date.now() && (
+                                        <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                                          EXPIRED
+                                        </span>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -953,7 +1100,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
         !isServerApiKeyConfigured
           ? buttonStyles.disabled
           : isActive 
-            ? `${buttonStyles.primary} ring-2 ring-blue-500`
+            ? `${buttonStyles.primary} ring-2 ring-green-500`
             : buttonStyles.primary
       }
       disabled={!isServerApiKeyConfigured}
@@ -963,7 +1110,7 @@ export default function AgentWallet({ onShowContent, isActive }: AgentWalletProp
           : undefined
       }
     >
-      Agent Wallet
+      Your Agent
     </button>
   );
 } 
