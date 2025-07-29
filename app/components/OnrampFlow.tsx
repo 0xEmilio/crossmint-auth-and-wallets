@@ -456,7 +456,7 @@ export function OnrampFlow({ onShowContent, isActive }: OnrampFlowProps) {
             {!personaClient ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
                   <p className="text-gray-600">Initializing identity verification...</p>
                 </div>
               </div>
@@ -478,7 +478,7 @@ export function OnrampFlow({ onShowContent, isActive }: OnrampFlowProps) {
                   <p className="text-gray-600 mb-4">KYC verification was cancelled</p>
                   <button
                     onClick={reopenKyc}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                   >
                     Reopen Verification
                   </button>
@@ -522,7 +522,7 @@ export function OnrampFlow({ onShowContent, isActive }: OnrampFlowProps) {
             {!checkoutFlow ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
                   <p className="text-gray-600">Loading payment form...</p>
                   <p className="text-sm text-gray-500 mt-1">Please wait while we prepare your payment</p>
                   <button
@@ -534,7 +534,7 @@ export function OnrampFlow({ onShowContent, isActive }: OnrampFlowProps) {
                         initializePayment(paymentSessionData, publicKey);
                       }
                     }}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                   >
                     Retry Loading Payment Form
                   </button>

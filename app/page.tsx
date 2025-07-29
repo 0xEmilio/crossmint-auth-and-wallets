@@ -12,7 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
 import { useAccount, WagmiProvider, useDisconnect } from "wagmi";
 import { DEFAULT_CHAIN, DEFAULT_SIGNER_TYPE, buttonStyles } from "@/lib/constants";
-import { PurchaseFlow, WorldstoreFlow, OnrampFlow, SendFlow, WalletInfo, BalanceFetcher, ConfigurationStatus, AgentWallet } from "./components";
+import { PurchaseFlow, WorldstoreFlow, OnrampFlow, SendFlow, WalletInfo, BalanceFetcher, ConfigurationStatus, AgentWallet, ViewTransactions } from "./components";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +24,7 @@ function Providers({ children }: { children: React.ReactNode }) {
           apiKey={process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_API_KEY || ""}
         >
           <CrossmintAuthProvider 
-            loginMethods={["email", "google", "web3"]}
+            loginMethods={["email", "google"]}
             authModalTitle="Sign in to Crossmint Demo"
           >
             <CrossmintWalletProvider
@@ -114,49 +114,76 @@ function CheckoutPage() {
             {activeContent}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <BalanceFetcher 
-              onShowContent={(content) => {
-                setActiveContent(content);
-                setActiveFlow('balances');
-              }}
-              isActive={activeFlow === 'balances'}
-            />
-            <OnrampFlow 
-              onShowContent={(content) => {
-                setActiveContent(content);
-                setActiveFlow('onramp');
-              }}
-              isActive={activeFlow === 'onramp'}
-            />
-            <SendFlow 
-              onShowContent={(content) => {
-                setActiveContent(content);
-                setActiveFlow('send');
-              }}
-              isActive={activeFlow === 'send'}
-            />
-            <PurchaseFlow 
-              onShowContent={(content) => {
-                setActiveContent(content);
-                setActiveFlow('purchase');
-              }}
-              isActive={activeFlow === 'purchase'}
-            />
-            <WorldstoreFlow 
-              onShowContent={(content) => {
-                setActiveContent(content);
-                setActiveFlow('worldstore');
-              }}
-              isActive={activeFlow === 'worldstore'}
-            />
-            <AgentWallet 
-              onShowContent={(content) => {
-                setActiveContent(content);
-                setActiveFlow('agent-wallet');
-              }}
-              isActive={activeFlow === 'agent-wallet'}
-            />
+          <div className="space-y-8">
+            {/* Your Wallet Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Wallet</h2>
+              <div className="grid gap-4 md:grid-cols-3">
+                <BalanceFetcher 
+                  onShowContent={(content) => {
+                    setActiveContent(content);
+                    setActiveFlow('balances');
+                  }}
+                  isActive={activeFlow === 'balances'}
+                />
+                <ViewTransactions 
+                  onShowContent={(content) => {
+                    setActiveContent(content);
+                    setActiveFlow('view-transactions');
+                  }}
+                  isActive={activeFlow === 'view-transactions'}
+                />
+                <AgentWallet 
+                  onShowContent={(content) => {
+                    setActiveContent(content);
+                    setActiveFlow('agent-wallet');
+                  }}
+                  isActive={activeFlow === 'agent-wallet'}
+                />
+              </div>
+            </div>
+
+            {/* Funding Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Funding</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <OnrampFlow 
+                  onShowContent={(content) => {
+                    setActiveContent(content);
+                    setActiveFlow('onramp');
+                  }}
+                  isActive={activeFlow === 'onramp'}
+                />
+                <SendFlow 
+                  onShowContent={(content) => {
+                    setActiveContent(content);
+                    setActiveFlow('send');
+                  }}
+                  isActive={activeFlow === 'send'}
+                />
+              </div>
+            </div>
+
+            {/* Commerce Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Commerce</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <PurchaseFlow 
+                  onShowContent={(content) => {
+                    setActiveContent(content);
+                    setActiveFlow('purchase');
+                  }}
+                  isActive={activeFlow === 'purchase'}
+                />
+                <WorldstoreFlow 
+                  onShowContent={(content) => {
+                    setActiveContent(content);
+                    setActiveFlow('worldstore');
+                  }}
+                  isActive={activeFlow === 'worldstore'}
+                />
+              </div>
+            </div>
           </div>
         )}
 
