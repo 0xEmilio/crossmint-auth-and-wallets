@@ -3,8 +3,6 @@
 import React from "react";
 import {
   CrossmintAuthProvider,
-  CrossmintCheckoutProvider,
-  CrossmintEmbeddedCheckout,
   CrossmintProvider,
   CrossmintWalletProvider,
   useAuth,
@@ -12,14 +10,9 @@ import {
 } from "@crossmint/client-sdk-react-ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
-import {
-  useAccount,
-  useWalletClient,
-  WagmiProvider,
-  useDisconnect,
-} from "wagmi";
-import { type Hex, parseTransaction } from "viem";
-import { baseSepolia } from "viem/chains";
+import { useAccount, WagmiProvider, useDisconnect } from "wagmi";
+import { DEFAULT_CHAIN, DEFAULT_SIGNER_TYPE, buttonStyles } from "@/lib/constants";
+import { PurchaseFlow, WorldstoreFlow, OnrampFlow, SendFlow, WalletInfo, BalanceFetcher, ConfigurationStatus, AgentWallet } from "./components";
 
 const queryClient = new QueryClient();
 
@@ -28,13 +21,21 @@ function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <CrossmintProvider
-          apiKey={process.env.NEXT_PUBLIC_CROSSMINT_API_KEY || ""}
+          apiKey={process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_API_KEY || ""}
         >
-          <CrossmintCheckoutProvider>
-            <CrossmintAuthProvider loginMethods={["email", "google", "web3"]}>
-              <CrossmintWalletProvider>{children}</CrossmintWalletProvider>
-            </CrossmintAuthProvider>
-          </CrossmintCheckoutProvider>
+          <CrossmintAuthProvider 
+            loginMethods={["email", "google", "web3"]}
+            authModalTitle="Sign in to Crossmint Demo"
+          >
+            <CrossmintWalletProvider
+              createOnLogin={{ 
+                chain: DEFAULT_CHAIN as any, 
+                signer: { type: DEFAULT_SIGNER_TYPE as any } 
+              }}
+            >
+              {children}
+            </CrossmintWalletProvider>
+          </CrossmintAuthProvider>
         </CrossmintProvider>
       </QueryClientProvider>
     </WagmiProvider>
@@ -43,70 +44,30 @@ function Providers({ children }: { children: React.ReactNode }) {
 
 function CheckoutPage() {
   const { user, login, logout } = useAuth();
-  const { wallet: smartWallet, getOrCreateWallet } = useWallet();
+  const { wallet } = useWallet();
   const { address: externalWallet } = useAccount();
   const { disconnect } = useDisconnect();
-  const { data: walletClient } = useWalletClient();
 
-  const [showCheckout, setShowCheckout] = React.useState(false);
   const [hasMounted, setHasMounted] = React.useState(false);
+  const [activeContent, setActiveContent] = React.useState<React.ReactNode>(null);
+  const [activeFlow, setActiveFlow] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  const isWeb3User = !!externalWallet;
-  const activeWallet = isWeb3User ? externalWallet : smartWallet?.address || "";
-
-  React.useEffect(() => {
-    if (!user?.id) return;
-
-    console.log(
-      `✅ Logged in as a ${isWeb3User ? "Web3" : "Email/Google"} user`
-    );
-    console.log("🔗 Active Wallet:", activeWallet);
-  }, [user?.id, isWeb3User, activeWallet]);
-
-  // Disconnect external wallet if using Email/Google
-  React.useEffect(() => {
-    if (user?.id && !externalWallet) {
-      disconnect();
-    }
-  }, [user?.id, externalWallet, disconnect]);
-
-  // Create wallet only if needed
-  React.useEffect(() => {
-    if (!user?.id) return;
-
-    if (!externalWallet && !smartWallet?.address) {
-      console.log("⚙️ Needs to create Crossmint wallet...");
-      getOrCreateWallet({
-        chain: "base-sepolia",
-        signer: { type: "passkey" },
-      });
-      return;
-    }
-    if (externalWallet) {
-      console.log(
-        "⛔ Web3 wallet detected, skipping Crossmint wallet creation."
-      );
-      return;
-    }
-    if (smartWallet?.address) {
-      console.log("✅ Already has a Crossmint smart wallet.");
-      return;
-    }
-  }, [user?.id, externalWallet, smartWallet?.address, getOrCreateWallet]);
-
   const handleLogout = () => {
     try {
       logout();
       disconnect();
-      setShowCheckout(false);
-      console.log("👋 Logged out and disconnected.");
     } catch (err) {
-      console.error("Logout error", err);
+      console.error("Logout error:", err);
     }
+  };
+
+  const handleBackToOptions = () => {
+    setActiveContent(null);
+    setActiveFlow(null);
   };
 
   if (!hasMounted) return null;
@@ -117,7 +78,7 @@ function CheckoutPage() {
         <button
           type="button"
           onClick={login}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className={buttonStyles.primary}
         >
           Login
         </button>
@@ -133,113 +94,73 @@ function CheckoutPage() {
           <button
             type="button"
             onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            className={buttonStyles.danger}
           >
             Logout
           </button>
         </div>
 
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <p className="text-gray-800 font-semibold">Connected Wallet:</p>
-          <p className="text-gray-600 break-all">
-            {activeWallet || "No wallet connected"}
-          </p>
-        </div>
+        <WalletInfo />
 
-        {!isWeb3User && !smartWallet?.address ? (
-          <button
-            type="button"
-            onClick={() => {
-              console.log("🛠 Manually triggering smart wallet creation...");
-              getOrCreateWallet({
-                chain: "base-sepolia",
-                signer: { type: "passkey" },
-              });
-            }}
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Create Crossmint Wallet
-          </button>
-        ) : !showCheckout ? (
-          <button
-            type="button"
-            onClick={() => {
-              console.log("🛒 Starting checkout flow...");
-              setShowCheckout(true);
-            }}
-            className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Purchase flow
-          </button>
+        {activeContent ? (
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={handleBackToOptions}
+              className={buttonStyles.secondary}
+            >
+              ← Back to Menu
+            </button>
+            {activeContent}
+          </div>
         ) : (
-          <div className="border rounded-lg p-6">
-            <CrossmintEmbeddedCheckout
-              recipient={{ walletAddress: activeWallet }}
-              lineItems={[
-                {
-                  collectionLocator: `crossmint:${process.env.NEXT_PUBLIC_CROSSMINT_COLLECTION_ID}`,
-                  callData: {
-                    totalPrice: "1",
-                    quantity: "1",
-                  },
-                },
-              ]}
-              payment={{
-                crypto: {
-                  enabled: true,
-                  payer: {
-                    address: activeWallet,
-                    initialChain: "base-sepolia",
-                    supportedChains: ["base-sepolia"],
-                    handleChainSwitch: async (chain) => {
-                      console.log("🔀 Chain switch requested:", chain);
-                      if (!walletClient) {
-                        console.error("❌ Wallet client not available");
-                        return;
-                      }
-                      await walletClient.switchChain({
-                        id: baseSepolia.id,
-                      });
-                    },
-                    handleSignAndSendTransaction: async (serializedTx) => {
-                      if (!walletClient) {
-                        console.error("❌ Wallet client not available");
-                        return {
-                          success: false,
-                          errorMessage: "Wallet client not found.",
-                        };
-                      }
-
-                      try {
-                        const tx = parseTransaction(serializedTx as Hex);
-                        const hash = await walletClient.sendTransaction({
-                          to: tx.to,
-                          value: tx.value,
-                          data: tx.data ?? "0x",
-                          gas: tx.gas,
-                          chainId: tx.chainId,
-                        });
-
-                        console.log("✅ Transaction sent:", hash);
-                        return { success: true, txId: hash ?? "" };
-                      } catch (error) {
-                        console.error("❌ Transaction failed", error);
-                        return {
-                          success: false,
-                          errorMessage:
-                            error instanceof Error
-                              ? error.message
-                              : "Transaction failed",
-                        };
-                      }
-                    },
-                  },
-                },
-                fiat: { enabled: true },
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <BalanceFetcher 
+              onShowContent={(content) => {
+                setActiveContent(content);
+                setActiveFlow('balances');
               }}
+              isActive={activeFlow === 'balances'}
+            />
+            <OnrampFlow 
+              onShowContent={(content) => {
+                setActiveContent(content);
+                setActiveFlow('onramp');
+              }}
+              isActive={activeFlow === 'onramp'}
+            />
+            <SendFlow 
+              onShowContent={(content) => {
+                setActiveContent(content);
+                setActiveFlow('send');
+              }}
+              isActive={activeFlow === 'send'}
+            />
+            <PurchaseFlow 
+              onShowContent={(content) => {
+                setActiveContent(content);
+                setActiveFlow('purchase');
+              }}
+              isActive={activeFlow === 'purchase'}
+            />
+            <WorldstoreFlow 
+              onShowContent={(content) => {
+                setActiveContent(content);
+                setActiveFlow('worldstore');
+              }}
+              isActive={activeFlow === 'worldstore'}
+            />
+            <AgentWallet 
+              onShowContent={(content) => {
+                setActiveContent(content);
+                setActiveFlow('agent-wallet');
+              }}
+              isActive={activeFlow === 'agent-wallet'}
             />
           </div>
         )}
+
+        <ConfigurationStatus />
       </div>
     </div>
   );
