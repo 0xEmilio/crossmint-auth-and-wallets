@@ -51,7 +51,6 @@ CROSSMINT_SERVER_API_KEY=your-server-api-key
 # Optional - Customization
 NEXT_PUBLIC_DEFAULT_CHAIN=base-sepolia
 NEXT_PUBLIC_SIGNER_TYPE=passkey
-NEXT_PUBLIC_CROSSMINT_ENV=staging
 
 # Optional - NFT Collection (for purchase testing)
 NEXT_PUBLIC_CROSSMINT_COLLECTION_ID=your-collection-id
