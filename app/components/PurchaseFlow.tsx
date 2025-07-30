@@ -2,10 +2,9 @@
 
 import React from "react";
 import { useWallet, CrossmintEmbeddedCheckout } from "@crossmint/client-sdk-react-ui";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount } from "wagmi";
 import { type Hex, parseTransaction } from "viem";
-import { baseSepolia } from "viem/chains";
-import { buttonStyles, cardStyles, DEFAULT_CHAIN } from "@/lib/constants";
+import { buttonStyles, cardStyles, DEFAULT_CHAIN, DEFAULT_SIGNER_TYPE } from "@/lib/constants";
 
 interface PurchaseFlowProps {
   onShowContent: (content: React.ReactNode) => void;
@@ -13,15 +12,26 @@ interface PurchaseFlowProps {
 }
 
 export function PurchaseFlow({ onShowContent, isActive }: PurchaseFlowProps) {
-  const { wallet } = useWallet();
-  const { address: externalWallet } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { wallet, getOrCreateWallet } = useWallet();
+  const { address: externalWallet, isConnected } = useAccount();
 
   const isWeb3User = !!externalWallet;
   const activeWallet = isWeb3User ? externalWallet : wallet?.address || "";
 
   const collectionId = process.env.NEXT_PUBLIC_CROSSMINT_COLLECTION_ID;
   const isCollectionConfigured = !!collectionId;
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log("PurchaseFlow Debug:", {
+      externalWallet,
+      isConnected,
+      activeWallet,
+      isWeb3User,
+      crossmintWallet: wallet?.address,
+      walletAvailable: !!wallet,
+    });
+  }, [externalWallet, isConnected, activeWallet, isWeb3User, wallet?.address, wallet]);
 
   const handlePurchaseClick = () => {
     if (!isCollectionConfigured) {
@@ -69,70 +79,93 @@ export function PurchaseFlow({ onShowContent, isActive }: PurchaseFlowProps) {
               <div>
                 <div className="bg-white border rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Payment Method</h3>
+                  
+                  {/* Wallet Status Check */}
+                  {!wallet && (
+                    <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-yellow-800">
+                        ⚠️ Wallet not available. Please ensure your wallet is connected and try again.
+                      </p>
+                                              <p className="text-yellow-700 text-sm mt-1">
+                          Debug info: isConnected={isConnected.toString()}, crossmintWallet={wallet ? "true" : "false"}, externalWallet={externalWallet ? "true" : "false"}
+                        </p>
+                    </div>
+                  )}
+                  
                   <div className="min-h-[400px]">
-                    <CrossmintEmbeddedCheckout
-                      recipient={{ walletAddress: activeWallet }}
-                      lineItems={[
-                        {
+                    {wallet ? (
+                      <CrossmintEmbeddedCheckout
+                        recipient={{ walletAddress: activeWallet }}
+                        lineItems={{
                           collectionLocator: `crossmint:${collectionId}`,
                           callData: {
                             totalPrice: "1",
-                            quantity: "1",
+                            quantity: 1,
                           },
-                        },
-                      ]}
-                      payment={{
-                        crypto: {
-                          enabled: true,
-                          payer: {
-                            address: activeWallet,
-                            initialChain: DEFAULT_CHAIN as any,
-                            supportedChains: [DEFAULT_CHAIN] as any,
-                            handleChainSwitch: async (chain: any) => {
-                              if (!walletClient) {
-                                console.error("Wallet client not available for chain switch");
-                                return;
-                              }
-                              await walletClient.switchChain({
-                                id: baseSepolia.id,
-                              });
-                            },
-                            handleSignAndSendTransaction: async (serializedTx: any) => {
-                              if (!walletClient) {
-                                console.error("Wallet client not available for transaction");
-                                return {
-                                  success: false,
-                                  errorMessage: "Wallet client not found.",
-                                };
-                              }
-
-                              try {
-                                const tx = parseTransaction(serializedTx as Hex);
-                                const hash = await walletClient.sendTransaction({
-                                  to: tx.to,
-                                  value: tx.value,
-                                  data: tx.data ?? "0x",
-                                  gas: tx.gas,
-                                  chainId: tx.chainId,
-                                });
-
-                                return { success: true, txId: hash ?? "" };
-                              } catch (error) {
-                                console.error("Transaction failed:", error);
-                                return {
-                                  success: false,
-                                  errorMessage:
-                                    error instanceof Error
-                                      ? error.message
-                                      : "Transaction failed",
-                                };
+                        }}
+                        payment={{
+                          crypto: {
+                            enabled: true,
+                            payer: {
+                              address: activeWallet,
+                              initialChain: "base-sepolia",
+                              supportedChains: ["base-sepolia", "polygon-amoy"],
+                              handleChainSwitch: async (chain: string) => {
+                              if (!wallet) {
+                                throw new Error("Wallet not available for chain switch");
                               }
                             },
+                              handleSignAndSendTransaction: async (serializedTx: string) => {
+                                console.log("Transaction signing requested");
+                                if (!wallet) {
+                                  console.error("Wallet not available for transaction");
+                                  return {
+                                    success: false,
+                                    errorMessage: "Wallet not found. Please ensure your wallet is connected.",
+                                  };
+                                }
+
+                                try {
+                                  const tx = parseTransaction(serializedTx as Hex);
+                                  console.log("Parsed transaction:", tx);
+                                  console.log("Using existing wallet:", wallet.address, "on chain:", wallet.chain);
+                                  
+                                  // Use the existing wallet directly
+                                  const { EVMWallet } = await import('@crossmint/client-sdk-react-ui');
+                                  const evmWallet = EVMWallet.from(wallet);
+                                  
+                                  const transactionInput = {
+                                    transaction: serializedTx
+                                  };
+                                  
+                                  const transactionResult = await evmWallet.sendTransaction(transactionInput);
+                                  
+                                  console.log("Transaction sent successfully:", transactionResult);
+                                  return { success: true, txId: transactionResult.hash || "" };
+                                } catch (error) {
+                                  console.error("Transaction failed:", error);
+                                  return {
+                                    success: false,
+                                    errorMessage:
+                                      error instanceof Error
+                                        ? error.message
+                                        : "Transaction failed",
+                                  };
+                                }
+                              },
+                            },
                           },
-                        },
-                        fiat: { enabled: true },
-                      }}
-                    />
+                          fiat: { enabled: true },
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-64">
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                          <p className="text-gray-600">Loading wallet client...</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
