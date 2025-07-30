@@ -24,7 +24,7 @@ function Providers({ children }: { children: React.ReactNode }) {
           apiKey={process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_API_KEY || ""}
         >
           <CrossmintAuthProvider 
-            loginMethods={["email", "google"]}
+            loginMethods={["email", "google", "twitter"]}
             authModalTitle="Sign in to Crossmint Demo"
           >
             <CrossmintWalletProvider
@@ -86,6 +86,9 @@ function CheckoutPage() {
     );
   }
 
+  // Check if there's an active wallet (either Crossmint or external)
+  const hasActiveWallet = wallet || externalWallet;
+
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -115,75 +118,101 @@ function CheckoutPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Your Wallet Section */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Wallet</h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                <BalanceFetcher 
-                  onShowContent={(content) => {
-                    setActiveContent(content);
-                    setActiveFlow('balances');
-                  }}
-                  isActive={activeFlow === 'balances'}
-                />
-                <ViewTransactions 
-                  onShowContent={(content) => {
-                    setActiveContent(content);
-                    setActiveFlow('view-transactions');
-                  }}
-                  isActive={activeFlow === 'view-transactions'}
-                />
-                <AgentWallet 
-                  onShowContent={(content) => {
-                    setActiveContent(content);
-                    setActiveFlow('agent-wallet');
-                  }}
-                  isActive={activeFlow === 'agent-wallet'}
-                />
-              </div>
-            </div>
+            {hasActiveWallet ? (
+              <>
+                {/* Your Wallet Section */}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Wallet</h2>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <BalanceFetcher 
+                      onShowContent={(content) => {
+                        setActiveContent(content);
+                        setActiveFlow('balances');
+                      }}
+                      isActive={activeFlow === 'balances'}
+                    />
+                    <ViewTransactions 
+                      onShowContent={(content) => {
+                        setActiveContent(content);
+                        setActiveFlow('view-transactions');
+                      }}
+                      isActive={activeFlow === 'view-transactions'}
+                    />
+                    <AgentWallet 
+                      onShowContent={(content) => {
+                        setActiveContent(content);
+                        setActiveFlow('agent-wallet');
+                      }}
+                      isActive={activeFlow === 'agent-wallet'}
+                    />
+                  </div>
+                </div>
 
-            {/* Funding Section */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Funding</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                <OnrampFlow 
-                  onShowContent={(content) => {
-                    setActiveContent(content);
-                    setActiveFlow('onramp');
-                  }}
-                  isActive={activeFlow === 'onramp'}
-                />
-                <SendFlow 
-                  onShowContent={(content) => {
-                    setActiveContent(content);
-                    setActiveFlow('send');
-                  }}
-                  isActive={activeFlow === 'send'}
-                />
-              </div>
-            </div>
+                {/* Funding Section */}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Funding</h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <OnrampFlow 
+                      onShowContent={(content) => {
+                        setActiveContent(content);
+                        setActiveFlow('onramp');
+                      }}
+                      isActive={activeFlow === 'onramp'}
+                    />
+                    <SendFlow 
+                      onShowContent={(content) => {
+                        setActiveContent(content);
+                        setActiveFlow('send');
+                      }}
+                      isActive={activeFlow === 'send'}
+                    />
+                  </div>
+                </div>
 
-            {/* Commerce Section */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Commerce</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                <PurchaseFlow 
-                  onShowContent={(content) => {
-                    setActiveContent(content);
-                    setActiveFlow('purchase');
-                  }}
-                  isActive={activeFlow === 'purchase'}
-                />
-                <WorldstoreFlow 
-                  onShowContent={(content) => {
-                    setActiveContent(content);
-                    setActiveFlow('worldstore');
-                  }}
-                  isActive={activeFlow === 'worldstore'}
-                />
+                {/* Commerce Section */}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Commerce</h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <PurchaseFlow 
+                      onShowContent={(content) => {
+                        setActiveContent(content);
+                        setActiveFlow('purchase');
+                      }}
+                      isActive={activeFlow === 'purchase'}
+                    />
+                    <WorldstoreFlow 
+                      onShowContent={(content) => {
+                        setActiveContent(content);
+                        setActiveFlow('worldstore');
+                      }}
+                      isActive={activeFlow === 'worldstore'}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="mb-6">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Wallet Available</h3>
+                  <p className="text-gray-600 mb-6">
+                    You're logged in but don't have an active wallet. Please create or connect a wallet to access wallet features.
+                  </p>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-500">
+                      • Crossmint wallets are created automatically when you first use wallet features
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      • You can also connect an external wallet like MetaMask
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
